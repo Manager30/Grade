@@ -1,89 +1,331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Document</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auth + Dashboard (Bootstrap) — Single File</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; }
+    .card { box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .pointer { cursor: pointer; }
+  </style>
 </head>
 <body>
-    <!-- <input type="text" value="" type="number" id="score">
-    <button onclick="CalculateResult()">Calculate</button>
-    <div>
-        <span>Score:</span><span id="result"></span>
-        <span>Grade:</span><span id="grade"></span>
-    </div>
+  <div class="container py-5">
+    <div id="app" class="row justify-content-center">
 
-    <input type="text" value="" id="scoring">
-    <button onclick="GradeResult()">System Grade </button>
-    <div>
-        <span>scoring:</span><span id="grader"></span>
-        <span>systemGra:</span><span id="creen"></span>
-    </div>
+      <!-- Auth Card -->
+      <div class="col-md-8 col-lg-6" id="authCard">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 id="authTitle">Sign In</h4>
+            <div>
+              <button id="showSignIn" class="btn btn-sm btn-outline-primary me-1">Sign In</button>
+              <button id="showSignUp" class="btn btn-sm btn-primary">Sign Up</button>
+            </div>
+          </div>
 
-    <input type="text" id="todo">
-    <button onclick="addTodo()">Add</button>
-    <div id="list"></div> -->
+          <!-- Sign In Form -->
+          <form id="signInForm" class="mb-0">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input id="signinEmail" type="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input id="signinPassword" type="password" class="form-control" required>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <input id="rememberMe" type="checkbox" class="form-check-input" />
+                <label for="rememberMe" class="form-check-label ms-1">Remember me</label>
+              </div>
+              <small class="text-muted pointer" id="goToSignUp">Don't have an account? Sign up</small>
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit">Sign In</button>
+            </div>
+          </form>
 
-    
+          <!-- Sign Up Form (hidden by default) -->
+          <form id="signUpForm" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Full Name</label>
+              <input id="signupName" type="text" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input id="signupEmail" type="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password <small class="text-muted">(min 8 characters)</small></label>
+              <input id="signupPassword" type="password" class="form-control" required>
+              <div class="form-text">Password must be at least 8 characters.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phone (optional)</label>
+              <input id="signupPhone" type="tel" class="form-control">
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <small class="text-muted pointer" id="goToSignIn">Already have account? Sign in</small>
+            </div>
+            <div class="d-grid">
+              <button class="btn btn-success" type="submit">Create account</button>
+            </div>
+          </form>
 
-
-  <div class="container">
-    <header>
-      <h1>Student Grading System</h1>
-    </header>
-
-    <section class="student-info">
-      <h2>Student Information</h2>
-      <!-- <form id="student-form"> -->
-        <div class="form-group">
-          <label for="student-name">Name:</label>
-          <input  type="text" id="student-name" placeholder="Enter student name">
-          <!-- <div id="list"></div> -->
         </div>
-        <div class="form-group">
-          <label for="student-score">score:</label>
-          <input type="text" id="student-score" placeholder="Enter student ID">
+
+      </div>
+
+      <!-- Dashboard Card (hidden) -->
+      <div class="col-md-10 col-lg-8 d-none" id="dashboardCard">
+        <div class="card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>Dashboard</h4>
+            <div>
+              <button id="btnDevView" class="btn btn-outline-secondary btn-sm me-2">Developer View</button>
+              <button id="logoutBtn" class="btn btn-danger btn-sm">Log out</button>
+            </div>
+          </div>
+
+          <div id="welcome" class="mb-3">
+            <!-- Filled by JS -->
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-body">
+              <h6>Your profile details</h6>
+              <ul class="list-group list-group-flush" id="profileList"></ul>
+            </div>
+          </div>
+
+          <div id="devPanel" class="d-none">
+            <h5>All Registered Users</h5>
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered">
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Created</th></tr></thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+            <div class="mt-2">
+              <button id="hideDev" class="btn btn-sm btn-outline-secondary">Hide developer view</button>
+              <button id="clearUsers" class="btn btn-sm btn-outline-danger">Clear all users (danger)</button>
+            </div>
+          </div>
+
         </div>
-        <button style="padding: 10px; background: transparent; border: 1px solid lightblue; border-radius: 7px;" onclick="calculateResult()">Check Result</button>
-        <!-- <div class="form-group">
-          <label for="course">Course:</label>
-          <input type="text" id="course" placeholder="Enter course name">
-        </div> -->
-      <!-- </form> -->
-    </section>
+      </div>
 
-    <section class="grades-section">
-      <h2>Enter Grades</h2>
-      <table >
-         <!-- <thead>
-            <th>Name</th>
-            <th>Score </th>
-            <th>Grade</th>
-        </thead>  -->
-        <section class="grades-section">
-          <table>
-            <thead>
-              <th>Name</th>
-              <th>Score</th>
-              <th>Grade</th>
-            </thead>
-            <tbody id="body">
-            </tbody>
-          </table>
-          </section>
-          
-            </section>
-      </table>
-    </section>
-
-    <footer>
-      <p>&copy; 2025 Grading System. All rights reserved.</p>
-    </footer>
+    </div>
   </div>
 
+  <!-- Bootstrap JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // --- Config ---
+    const DEV_PANEL_MASTER_KEY = 'devpass'; // change to secure value
+    const PASSWORD_REGEX = /^.{8,}$/; // at least 8 characters
 
-  <script src="script.js"></script>
+    // --- Helpers ---
+    const qs = sel => document.querySelector(sel);
+    const getUsers = () => JSON.parse(localStorage.getItem('users') || '[]');
+    const saveUsers = (u) => localStorage.setItem('users', JSON.stringify(u));
+    const setCurrentUser = (user, remember=false) => {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      if(!remember) {
+        // if not remembering across sessions, also store a short-lived session flag
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+      }
+    };
+    const clearCurrentUser = () => { localStorage.removeItem('currentUser'); sessionStorage.removeItem('currentUser'); };
+    const getCurrentUser = () => JSON.parse(localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser') || 'null');
 
+    // --- UI elements ---
+    const authCard = qs('#authCard');
+    const dashboardCard = qs('#dashboardCard');
+    const signInForm = qs('#signInForm');
+    const signUpForm = qs('#signUpForm');
+    const showSignUp = qs('#showSignUp');
+    const showSignIn = qs('#showSignIn');
+    const authTitle = qs('#authTitle');
+
+    function showSignInForm() {
+      authTitle.textContent = 'Sign In';
+      signUpForm.classList.add('d-none');
+      signInForm.classList.remove('d-none');
+    }
+    function showSignUpForm() {
+      authTitle.textContent = 'Create account';
+      signInForm.classList.add('d-none');
+      signUpForm.classList.remove('d-none');
+    }
+
+    // --- Toggle handlers ---
+    showSignUp.addEventListener('click', showSignUpForm);
+    showSignIn.addEventListener('click', showSignInForm);
+    qs('#goToSignUp').addEventListener('click', showSignUpForm);
+    qs('#goToSignIn').addEventListener('click', showSignInForm);
+
+    // --- Sign Up ---
+    signUpForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = qs('#signupName').value.trim();
+      const email = qs('#signupEmail').value.trim().toLowerCase();
+      const password = qs('#signupPassword').value;
+      const phone = qs('#signupPhone').value.trim();
+
+      if(!PASSWORD_REGEX.test(password)) {
+        alert('Password must be at least 8 characters.');
+        return;
+      }
+
+      const users = getUsers();
+      const exists = users.find(u => u.email === email);
+      if(exists) {
+        // If user exists, redirect to sign in (per your requirement)
+        alert('User already exists. Redirecting to Sign In.');
+        showSignInForm();
+        qs('#signinEmail').value = email;
+        return;
+      }
+
+      const newUser = {
+        id: Date.now(),
+        name,
+        email,
+        password, // NOTE: In production do NOT store plaintext passwords. Hash on server.
+        phone,
+        createdAt: new Date().toISOString()
+      };
+      users.push(newUser);
+      saveUsers(users);
+
+      // Auto log in the user and remember
+      setCurrentUser({ id: newUser.id, name: newUser.name, email: newUser.email }, true);
+      showDashboard();
+    });
+
+    // --- Sign In ---
+    signInForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = qs('#signinEmail').value.trim().toLowerCase();
+      const password = qs('#signinPassword').value;
+      const remember = qs('#rememberMe').checked;
+
+      const users = getUsers();
+      const user = users.find(u => u.email === email);
+      if(!user) {
+        alert('No account found with that email. Please sign up.');
+        showSignUpForm();
+        return;
+      }
+      if(user.password !== password) {
+        alert('Incorrect password. Please try again.');
+        return;
+      }
+
+      setCurrentUser({ id: user.id, name: user.name, email: user.email }, remember);
+      showDashboard();
+    });
+
+    // --- Dashboard / Profile ---
+    qs('#logoutBtn').addEventListener('click', () => {
+      clearCurrentUser();
+      dashboardCard.classList.add('d-none');
+      authCard.classList.remove('d-none');
+      showSignInForm();
+    });
+
+    function showDashboard() {
+      const cu = getCurrentUser();
+      if(!cu) return; // safety
+      authCard.classList.add('d-none');
+      dashboardCard.classList.remove('d-none');
+
+      qs('#welcome').innerHTML = `<h5>Welcome, ${escapeHtml(cu.name || cu.email)}!</h5><p class=\"text-muted\">Signed in as <strong>${escapeHtml(cu.email)}</strong></p>`;
+
+      // fill profile
+      const users = getUsers();
+      const full = users.find(u => u.id === cu.id) || {};
+      const profileList = qs('#profileList');
+      profileList.innerHTML = '';
+      appendListItem('Full name', full.name || '-');
+      appendListItem('Email', full.email || '-');
+      appendListItem('Phone', full.phone || '-');
+      appendListItem('Member since', full.createdAt ? new Date(full.createdAt).toLocaleString() : '-');
+
+      function appendListItem(k, v) {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-start';
+        li.innerHTML = `<div><strong>${k}</strong></div><div>${escapeHtml(v)}</div>`;
+        profileList.appendChild(li);
+      }
+    }
+
+    // --- Developer View ---
+    qs('#btnDevView').addEventListener('click', async () => {
+      const key = prompt('Enter developer master key to view all users:');
+      if(key === null) return; // cancelled
+      if(key !== DEV_PANEL_MASTER_KEY) { alert('Incorrect dev key. Access denied.'); return; }
+      openDevPanel();
+    });
+    qs('#hideDev').addEventListener('click', () => qs('#devPanel').classList.add('d-none'));
+
+    qs('#clearUsers').addEventListener('click', () => {
+      if(!confirm('This will remove ALL users from localStorage. Continue?')) return;
+      localStorage.removeItem('users');
+      localStorage.removeItem('currentUser');
+      sessionStorage.removeItem('currentUser');
+      alert('All users cleared. Reloading page.');
+      location.reload();
+    });
+
+    function openDevPanel() {
+      const users = getUsers();
+      const tbody = qs('#usersTableBody');
+      tbody.innerHTML = '';
+      users.forEach((u, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.phone)}</td><td>${new Date(u.createdAt).toLocaleString()}</td>`;
+        tbody.appendChild(tr);
+      });
+      qs('#devPanel').classList.remove('d-none');
+    }
+
+    // --- Utilities ---
+    function escapeHtml(str) {
+      if(!str && str !== 0) return '';
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+
+    // --- Auto-login if currentUser present ---
+    document.addEventListener('DOMContentLoaded', () => {
+      const cu = getCurrentUser();
+      if(cu) {
+        // Attempt to show dashboard (if user still exists)
+        const users = getUsers();
+        const exists = users.find(u => u.id === cu.id || u.email === (cu.email||'').toLowerCase());
+        if(exists) {
+          // refresh name in currentUser (in case it was only email)
+          setCurrentUser({ id: exists.id, name: exists.name, email: exists.email }, true);
+          showDashboard();
+          return;
+        } else {
+          // stale currentUser
+          clearCurrentUser();
+        }
+      }
+      showSignInForm();
+    });
+
+  </script>
 </body>
 </html>
