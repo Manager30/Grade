@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GoodHealth - Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8f9fa; }
+    .navbar-brand { font-weight: 700; color: #007bff !important; }
+    .card-facility { transition: transform 0.2s, box-shadow 0.2s; }
+    .card-facility:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .badge-service { font-size: 0.75rem; margin: 2px; }
+    #map { height: 400px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .rating { color: #ffc107; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Manager GoodHealth</a>
+    <div class="d-flex align-items-center">
+      <span class="me-3" id="userEmail"></span>
+      <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-5" id="dashboard">
+  <h3 class="mb-4">Find Healthcare Near You</h3>
+  <p class="text-muted">Search for hospitals and pharmacies across Nigeria</p>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <select id="stateFilter" class="form-select">
+        <option value="">All States</option>
+        <option>Lagos</option><option>Abuja, FCT</option><option>Rivers</option>
+        <option>Kano</option><option>Oyo</option><option>Enugu</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select id="typeFilter" class="form-select">
+        <option value="">All Facilities</option>
+        <option>Hospital</option><option>Pharmacy</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search city, area, or name..."/>
+    </div>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="mb-0"><strong id="resultCount">Found 14 facilities</strong></p>
+  </div>
+
+  <div class="row" id="facilityList"></div>
+
+  <div class="mb-5">
+    <div id="map"></div>
+    <div class="text-center mt-2">
+      <button id="locateBtn" class="btn btn-success btn-sm">Use My Location</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/Manager=AIzaSyD-YourActualKeyHere1234567890&callback=initMap" async defer></script>
+<script src="script.js"></script>
+
+</body>
+</html>
+
+
+
+<script>
+  const facilities = [ 
+    
+  { 
+    name: "Ladoke Akintola University Teaching Hospital (LTH)", 
+    type: "Hospital", 
+    city: "ogbomoso", 
+    state: "oyo", 
+    phone: "+234 1 8822141", 
+    hours: "24/7", 
+    rating: 4.5, 
+    services: ["Emergency", "Surgery", "Maternity", "Pediatrics", "Diagnostics"], 
+    address: "Isale-General, Ogbomoso", 
+    lat: 6.518, 
+    lng: 3.346 
+  },
+  { 
+    name: "Lagos University Teaching Hospital (LUTH)", 
+    type: "Hospital", 
+    city: "Lagos", 
+    state: "Lagos", 
+    phone: "+234 1 8822141", 
+    hours: "24/7", 
+    rating: 4.5, 
+    services: ["Emergency", "Surgery", "Maternity", "Pediatrics", "Diagnostics"], 
+    address: "Idi-Araba, Mushin", 
+    lat: 6.518, 
+    lng: 3.346 
+  },
+  { 
+    name: "Reddington Hospital", 
+    type: "Hospital", 
+    city: "Lagos", 
+    state: "Lagos", 
+    phone: "+234 1 4617190", 
+    hours: "24/7", 
+    rating: 4.7, 
+    services: ["Emergency", "Surgery", "Diagnostics", "Cardiology"], 
+    address: "12 Idowu Martins Street, Victoria Island", 
+    lat: 6.428, 
+    lng: 3.422 
+  },
+  { 
+    name: "MedPlus Pharmacy Victoria Island", 
+    type: "Pharmacy", 
+    city: "Lagos", 
+    state: "Lagos", 
+    phone: "+234 1 2716000", 
+    hours: "8am - 10pm", 
+    rating: 4.3, 
+    services: ["Prescription", "OTC Drugs", "Health Consultation"], 
+    address: "Akin Adesola Street, Victoria Island", 
+    lat: 6.429, 
+    lng: 3.421 
+  },
+  { 
+    name: "National Hospital Abuja", 
+    type: "Hospital", 
+    city: "Abuja", 
+    state: "Abuja, FCT", 
+    phone: "+234 9 4613841", 
+    hours: "24/7", 
+    rating: 4.4, 
+    services: ["Emergency", "Surgery", "Maternity", "ICU"], 
+    address: "Plot 132 Central District", 
+    lat: 9.076, 
+    lng: 7.398 
+  },
+  { 
+    name: "Garki Hospital", 
+    type: "Hospital", 
+    city: "Abuja", 
+    state: "Abuja, FCT", 
+    phone: "+234 9 8765432", 
+    hours: "24/7", 
+    rating: 4.0, 
+    services: ["General Medicine", "Pediatrics", "Laboratory"], 
+    address: "Tafawa Balewa Way, Garki", 
+    lat: 9.032, 
+    lng: 7.485 
+  },
+  { 
+    name: "HealthPlus Pharmacy Wuse", 
+    type: "Pharmacy", 
+    city: "Abuja", 
+    state: "Abuja, FCT", 
+    phone: "+234 9 4613000", 
+    hours: "8am - 9pm", 
+    rating: 4.5, 
+    services: ["Prescription", "OTC Drugs", "Medical Supplies"], 
+    address: "Adetokunbo Ademola Crescent, Wuse II", 
+    lat: 9.074, 
+    lng: 7.468 
+  },
+  { 
+    name: "Akoh Pharmacy ", 
+    type: "Pharmacy", 
+    city: "Ogbomoso", 
+    state: "Oyo State", 
+    phone: "+234 9 4613000", 
+    hours: "24/7", 
+    rating: 5.5, 
+    services: ["Prescription", "OTC Drugs", "Medical Supplies"], 
+    address: "Ogbomoso, oyo state. General Hospital Road old ilorin road", 
+    lat: 9.074, 
+    lng: 7.468 
+  },
+  { 
+    name: "University of Port Harcourt Teaching Hospital", 
+    type: "Hospital", 
+    city: "Port Harcourt", 
+    state: "Rivers", 
+    phone: "+234 84 230020", 
+    hours: "24/7", 
+    rating: 4.3, 
+    services: ["Emergency", "Surgery", "Maternity", "Oncology"], 
+    address: "East-West Road, Choba", 
+    lat: 4.900, 
+    lng: 6.925 
+  },
+  { 
+    name: "Ivory Pharmacy GRA", 
+    type: "Pharmacy", 
+    city: "Port Harcourt", 
+    state: "Rivers", 
+    phone: "+234 84 230900", 
+    hours: "8am - 8pm", 
+    rating: 4.2, 
+    services: ["Prescription", "OTC Drugs", "Home Delivery"], 
+    address: "Old GRA, Port Harcourt", 
+    lat: 4.818, 
+    lng: 7.010 
+  },
+  { 
+    name: "Murtala Muhammad Specialist Hospital", 
+    type: "Hospital", 
+    city: "Kano", 
+    state: "Kano", 
+    phone: "+234 64 631310", 
+    hours: "24/7", 
+    rating: 4.1, 
+    services: ["Emergency", "General Medicine", "Surgery"], 
+    address: "Kofar Mata, Kano", 
+    lat: 12.000, 
+    lng: 8.520 
+  },
+  { 
+    name: "Alpha Pharmacy Kano", 
+    type: "Pharmacy", 
+    city: "Kano", 
+    state: "Kano", 
+    phone: "+234 64 631500", 
+    hours: "8am - 7pm", 
+    rating: 4.0, 
+    services: ["Prescription", "OTC Drugs"], 
+    address: "Ahmadu Bello Way", 
+    lat: 11.995, 
+    lng: 8.525 
+  },
+  { 
+    name: "University College Hospital (UCH)", 
+    type: "Hospital", 
+    city: "Ibadan", 
+    state: "Oyo", 
+    phone: "+234 2 2410088", 
+    hours: "24/7", 
+    rating: 4.6, 
+    services: ["Emergency", "Surgery", "Pediatrics", "Oncology", "Neurology"], 
+    address: "Queen Elizabeth Road", 
+    lat: 7.402, 
+    lng: 3.897 
+  },
+  { 
+    name: "MedCare Pharmacy Bodija", 
+    type: "Pharmacy", 
+    city: "Ibadan", 
+    state: "Oyo", 
+    phone: "+234 2 8103456", 
+    hours: "8am - 9pm", 
+    rating: 4.4, 
+    services: ["Prescription", "OTC Drugs", "Medical Devices"], 
+    address: "Bodija Market Road", 
+    lat: 7.408, 
+    lng: 3.906 
+  },
+  { 
+    name: "Enugu State University Teaching Hospital", 
+    type: "Hospital", 
+    city: "Enugu", 
+    state: "Enugu", 
+    phone: "+234 42 255840", 
+    hours: "24/7", 
+    rating: 4.2, 
+    services: ["Emergency", "Surgery", "Maternity", "Orthopedics"], 
+    address: "Park Lane, GRA", 
+    lat: 6.441, 
+    lng: 7.503 
+  },
+  { 
+    name: "GoodLife Pharmacy Enugu", 
+    type: "Pharmacy", 
+    city: "Enugu", 
+    state: "Enugu", 
+    phone: "+234 42 255100", 
+    hours: "8am - 8pm", 
+    rating: 4.3, 
+    services: ["Prescription", "OTC Drugs", "Health Screening"], 
+    address: "Ogui Road", 
+    lat: 6.433, 
+    lng: 7.498 
+  },
+   { 
+    name: "Kwara State University Teaching Hospital", 
+    type: "Hospital", 
+    city: "Ilorin", 
+    state: "Kwara", 
+    phone: "+234 42 244840", 
+    hours: "24/7", 
+    rating: 4.2, 
+    services: ["Emergency", "Surgery", "Maternity", "Orthopedics"], 
+    address: "Taiwo Road, GRA", 
+    lat: 6.441, 
+    lng: 7.503 
+  },
+  { 
+    name: "UNIZIK Pharmacy Akwa", 
+    type: "Pharmacy", 
+    city: "Akwa", 
+    state: "Anambra", 
+    phone: "+234 42 255100", 
+    hours: "8am - 8pm", 
+    rating: 7.3, 
+    services: ["Prescription", "OTC Drugs", "Health Screening"], 
+    address: " Road", 
+    lat: 6.433, 
+    lng: 7.498 
+  },
+
+];
+
+
+  let map, userMarker, markers = [];
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 9.082, lng: 8.675 },
+      zoom: 6,
+      styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
+    });
+    renderFacilities(facilities);
+    addFacilityMarkers(facilities);
+  }
+
+  function addFacilityMarkers(data) {
+    clearMarkers();
+    data.forEach(f => {
+      const marker = new google.maps.Marker({
+        position: { lat: f.lat, lng: f.lng },
+        map, title: f.name,
+        icon: f.type === "Hospital" ? "http://maps.google.com/mapfiles/ms/icons/red-dot.png" : "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+      });
+      const info = `<div><strong>${f.name}</strong><br>${f.address}<br><span class="badge bg-primary">${f.type}</span> <span class="rating">★ ${f.rating}</span></div>`;
+      const infowindow = new google.maps.InfoWindow({ content: info });
+      marker.addListener("click", () => infowindow.open(map, marker));
+      markers.push(marker);
+    });
+  }
+
+  function clearMarkers() { markers.forEach(m => m.setMap(null)); markers = []; }
+
+  function renderFacilities(data) {
+    const list = document.getElementById("facilityList");
+    const count = document.getElementById("resultCount");
+    count.textContent = `Found ${data.length} facilities`;
+    list.innerHTML = data.map(f => `
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 card-facility border-0 shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title mb-0">${f.name}</h5>
+              <span class="badge ${f.type === 'Hospital' ? 'bg-danger' : 'bg-success'}">${f.type}</span>
+            </div>
+            <p class="text-muted small">${f.city}, ${f.state}</p>
+            <p class="mb-1"><strong>Phone</strong> ${f.phone}</p>
+            <p class="mb-1"><strong>Time</strong> ${f.hours}</p>
+            <p class="mb-2"><strong class="rating">★ ${f.rating}</strong></p>
+            <p class="mb-2"><strong>Services:</strong></p>
+            <div>${f.services.slice(0,3).map(s => `<span class="badge bg-light text-dark badge-service">${s}</span>`).join('')}
+              ${f.services.length > 3 ? `<span class="text-muted small">+${f.services.length-3} more</span>` : ''}
+            </div>
+            <hr><p class="text-muted small mb-0">${f.address}</p>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function applyFilters() {
+    let filtered = facilities;
+    const state = document.getElementById("stateFilter").value;
+    const type = document.getElementById("typeFilter").value;
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    if (state) filtered = filtered.filter(f => f.state === state);
+    if (type) filtered = filtered.filter(f => f.type === type);
+    if (query) filtered = filtered.filter(f => f.name.toLowerCase().includes(query) || f.city.toLowerCase().includes(query) || f.address.toLowerCase().includes(query));
+    renderFacilities(filtered);
+    addFacilityMarkers(filtered);
+  }
+
+  ["stateFilter", "typeFilter", "searchInput"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener("change", applyFilters); el.addEventListener("keyup", applyFilters); }
+  });
+
+  document.getElementById("locateBtn")?.addEventListener("click", () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        map.setCenter(userPos); map.setZoom(14);
+        if (userMarker) userMarker.setMap(null);
+        userMarker = new google.maps.Marker({ position: userPos, map, icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png", title: "You are here" });
+      }, () => alert("Geolocation failed."));
+    }
+  });
+
+  window.onload = () => {
+    const user = getCurrentUser();
+    if (user) {
+      document.getElementById("userEmail").textContent = user.email;
+      renderFacilities(facilities);
+    }
+  };
+</script>
+</body>
+</html>
